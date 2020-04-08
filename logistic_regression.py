@@ -3,8 +3,7 @@ import matplotlib.pyplot as plt
 
 
 def load_data(path):
-    data_pos = list()
-    data_neg = list()
+    data_pos, data_neg = [], []
     with open(path, 'r') as file:
         for line in file:
             line = line.split()
@@ -28,19 +27,41 @@ def split_data(data_pos, data_neg, p=2/3):
     return training_neg + training_pos, test_pos+test_neg
 
 
-def sigmoid(x, teta):
-    return 1/(1+np.exp(-np.dot(x, teta)))
+class LogisticRegression:
+    def __init__(self, theta_size):
+        self.theta = np.random.normal(scale=0.0001, size=theta_size)
+
+    @staticmethod
+    def sigmoid(x, theta):
+        return 1 / (1 + np.exp(-np.dot(x, theta)))
+
+    def fit(self, training_data, func_triggers, measure, alpha, beta):
+        history = []
+        for i, sample in enumerate(training_data):
+            x, y = sample[0], sample[1]
+            self.theta += alpha * ((y - self.sigmoid(x, self.theta)) * x - beta * self.theta)
+            if i + 1 in func_triggers:
+                history.append(measure(self.classify))
+        return history
+
+    def classify(self, x):
+        return 1 if self.sigmoid(x, self.theta) >= 0.5 else 0
 
 
-def accuracy(data, teta):
+def accuracy(classify, data):
     ok = 0
     for sample in data:
         x, y = sample[0], sample[1]
-        h = sigmoid(x, teta)
-        y0 = 1 if h >= 0.5 else 0
+        y0 = classify(x)
         if y0 == y:
             ok += 1
     return ok/len(data)
+
+
+def feed_with_data(measure, data):
+    def func(classify):
+        return measure(classify, data)
+    return func
 
 
 measures = [0.01, 0.02, 0.03, 0.125, 0.625, 1]
@@ -48,7 +69,7 @@ measures = [0.01, 0.02, 0.03, 0.125, 0.625, 1]
 data_pos, data_neg = load_data("rp.data")
 
 alpha = 0.001
-beta = 0
+beta = 0.001
 rounds = 10
 
 histories = []
@@ -57,19 +78,13 @@ for i in range(rounds):
     np.random.shuffle(data_neg)
     training_data, test_data = split_data(data_pos, data_neg)
     np.random.shuffle(training_data)
-    where = [int(x * len(training_data)) for x in measures]
+    triggers = [int(x * len(training_data)) for x in measures]
 
-    teta = np.random.normal(scale=0.0001, size=(len(training_data[0][0]),))
-    history = []
-    for i, sample in enumerate(training_data):
-        x, y = sample[0], sample[1]
-        teta += alpha*((y-sigmoid(x, teta))*x - beta*teta)
-        if i+1 in where:
-            history.append(accuracy(training_data, teta))
+    model = LogisticRegression(theta_size=(9,))
+    history = model.fit(training_data, triggers, feed_with_data(accuracy, test_data), alpha, beta)
     histories.append(history)
 
 history = np.mean(histories, axis=0)
-
 
 plt.figure()
 plt.plot(measures, history, 'ro', label="train_loss")
