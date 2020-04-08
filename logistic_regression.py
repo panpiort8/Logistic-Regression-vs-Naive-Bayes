@@ -117,35 +117,34 @@ def feed_with_data(measure, data):
     return func
 
 
-measures = [0.01, 0.02, 0.03, 0.125, 0.625, 1]
+def test(cls, partial_triggers, data_pos, data_neg, rounds, measure, alpha=None, beta=None):
+    histories = []
+    for i in range(rounds):
+        np.random.shuffle(data_pos)
+        np.random.shuffle(data_neg)
+        training_data, test_data = split_data(data_pos, data_neg)
+        np.random.shuffle(training_data)
+        triggers = [int(x * len(training_data)) for x in partial_triggers]
+        model = cls(k=9)
+        history = model.fit(training_data, triggers, feed_with_data(measure, test_data), alpha=alpha, beta=beta)
+        histories.append(history)
 
+    return np.mean(histories, axis=0)
+
+
+partial_triggers = [0.01, 0.02, 0.03, 0.125, 0.625, 1]
 data_pos, data_neg = load_data("rp.data")
 
-alpha = 0.001
-beta = 0.001
 rounds = 10
-
-histories = []
-for i in range(rounds):
-    np.random.shuffle(data_pos)
-    np.random.shuffle(data_neg)
-    training_data, test_data = split_data(data_pos, data_neg)
-    np.random.shuffle(training_data)
-    triggers = [int(x * len(training_data)) for x in measures]
-
-    model = NaiveBayes(k=9)
-    history = model.fit(training_data, triggers, feed_with_data(loss, test_data))
-    # model = LogisticRegression(k=9)
-    # history = model.fit(training_data, triggers, feed_with_data(accuracy, test_data), alpha, beta)
-    histories.append(history)
-
-history = np.mean(histories, axis=0)
+logistic_history = test(LogisticRegression, partial_triggers, data_pos, data_neg, rounds, loss, alpha=0.005, beta=0.001)
+bayes_history = test(NaiveBayes, partial_triggers, data_pos, data_neg, rounds, loss)
 
 plt.figure()
-plt.plot(measures, history, 'ro', label="test_loss")
-plt.xscale("log")
-plt.title("Training Accuracy")
+plt.plot(partial_triggers, logistic_history, 'ro-', label="logistic_loss")
+plt.plot(partial_triggers, bayes_history, 'bo-', label="bayes_loss")
+# plt.xscale("log")
+plt.title("Naive Bayes vs Logistic Regression")
 plt.xlabel("Part of training set")
-plt.ylabel("Accuracy")
+plt.ylabel("Loss")
 plt.legend()
 plt.show()
