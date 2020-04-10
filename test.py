@@ -76,7 +76,7 @@ def test(cls, partial_triggers, data_pos, data_neg, rounds, measure, alpha=None,
 
 
 partial_triggers = [0.01, 0.02, 0.03, 0.125, 0.625, 1]
-rounds = 100
+rounds = 1000
 
 data_pos, data_neg = load_data("rp.data")
 bayes_history = test(NaiveBayes, partial_triggers, data_pos, data_neg, rounds, loss)

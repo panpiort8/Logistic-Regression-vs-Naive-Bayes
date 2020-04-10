@@ -3,7 +3,7 @@ import numpy as np
 
 class LogisticRegression:
     def __init__(self, k):
-        self.theta = np.random.uniform(0, 1, size=(k,))
+        self.theta = np.random.normal(0, 1, size=(k,))
 
     @staticmethod
     def sigmoid(x, theta):
