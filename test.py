@@ -1,20 +1,27 @@
 import numpy as np
+from sklearn import preprocessing
 import matplotlib.pyplot as plt
 from naive_bayes import NaiveBayes
 from logistic_regression import LogisticRegression
 
 
-def load_data(path):
+def load_data(path, scaling=False):
     data_pos, data_neg = [], []
+    Xs = []
+    ys = []
     with open(path, 'r') as file:
         for line in file:
             line = line.split()
-            X = np.array([float(x) for x in line[:-1]])
-            y = int(line[-1]) // 4
-            if y == 1:
-                data_pos.append((X, y))
-            else:
-                data_neg.append((X, y))
+            Xs.append( np.array([float(x) for x in line[:-1]]))
+            ys.append(int(line[-1]) // 4)
+    Xs = np.array(Xs)
+    if scaling:
+        Xs = preprocessing.scale(Xs)
+    for x, y in zip(Xs, ys):
+        if y == 1:
+            data_pos.append((x, y))
+        else:
+            data_neg.append((x, y))
     return data_pos, data_neg
 
 
@@ -69,11 +76,12 @@ def test(cls, partial_triggers, data_pos, data_neg, rounds, measure, alpha=None,
 
 
 partial_triggers = [0.01, 0.02, 0.03, 0.125, 0.625, 1]
-data_pos, data_neg = load_data("rp.data")
+rounds = 100
 
-rounds = 10
-logistic_history = test(LogisticRegression, partial_triggers, data_pos, data_neg, rounds, loss, alpha=0.005, beta=0.001)
+data_pos, data_neg = load_data("rp.data")
 bayes_history = test(NaiveBayes, partial_triggers, data_pos, data_neg, rounds, loss)
+data_pos, data_neg = load_data("rp.data", scaling=True)
+logistic_history = test(LogisticRegression, partial_triggers, data_pos, data_neg, rounds, loss, alpha=0.1, beta=0.0005)
 
 plt.figure()
 plt.plot(partial_triggers, logistic_history, 'ro-', label="logistic_loss")
