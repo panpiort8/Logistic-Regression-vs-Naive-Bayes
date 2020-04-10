@@ -9,14 +9,14 @@ def load_data(path):
             line = line.split()
             X = np.array([float(x) for x in line[:-1]])
             y = int(line[-1]) // 4
-            if y==1:
+            if y == 1:
                 data_pos.append((X, y))
             else:
                 data_neg.append((X, y))
     return data_pos, data_neg
 
 
-def split_data(data_pos, data_neg, p=2/3):
+def split_data(data_pos, data_neg, p=2 / 3):
     len_pos = int(len(data_pos) * p)
     training_pos = data_pos[:len_pos]
     test_pos = data_pos[len_pos:]
@@ -24,7 +24,7 @@ def split_data(data_pos, data_neg, p=2/3):
     len_neg = int(len(data_neg) * p)
     training_neg = data_neg[:len_neg]
     test_neg = data_neg[len_neg:]
-    return training_neg + training_pos, test_pos+test_neg
+    return training_neg + training_pos, test_pos + test_neg
 
 
 class LogisticRegression:
@@ -37,7 +37,7 @@ class LogisticRegression:
 
     def prob_y_under_x(self, x, y):
         p1 = self.sigmoid(x, self.theta)
-        return p1 if y == 1 else 1-p1
+        return p1 if y == 1 else 1 - p1
 
     def fit(self, training_data, triggers, measure, alpha, beta, **kwargs):
         history = []
@@ -60,10 +60,10 @@ class NaiveBayes:
     # returns p(x_j=a|y)
     def prob_x_j_under_y(self, j, a, y):
         count = self.stats[y][0][j].get(a, 0)
-        return (1+count)/(2+self.stats[y][1])
+        return (1 + count) / (2 + self.stats[y][1])
 
     def prob_y(self, y):
-        return (1+self.stats[y][1])/(2+self.stats[0][1]+self.stats[1][1])
+        return (1 + self.stats[y][1]) / (2 + self.stats[0][1] + self.stats[1][1])
 
     def prob_x_and_y(self, x, y):
         prob = self.prob_y(y)
@@ -74,7 +74,7 @@ class NaiveBayes:
     def prob_y_under_x(self, x, y):
         x_and_0 = self.prob_x_and_y(x, 0)
         x_and_1 = self.prob_x_and_y(x, 1)
-        p0 = x_and_0 / (x_and_0+x_and_1)
+        p0 = x_and_0 / (x_and_0 + x_and_1)
         return p0 if y == 0 else 1 - p0
 
     def classify(self, x):
@@ -101,19 +101,20 @@ def accuracy(model, data):
         y0 = model.classify(x)
         if y0 == y:
             ok += 1
-    return ok/len(data)
+    return ok / len(data)
 
 
 def loss(model, data):
     loss = 0
     for x, y in data:
-        loss += (1-model.prob_y_under_x(x, y))**2
+        loss += (1 - model.prob_y_under_x(x, y)) ** 2
     return loss / len(data)
 
 
 def feed_with_data(measure, data):
     def func(model):
         return measure(model, data)
+
     return func
 
 
@@ -142,7 +143,6 @@ bayes_history = test(NaiveBayes, partial_triggers, data_pos, data_neg, rounds, l
 plt.figure()
 plt.plot(partial_triggers, logistic_history, 'ro-', label="logistic_loss")
 plt.plot(partial_triggers, bayes_history, 'bo-', label="bayes_loss")
-# plt.xscale("log")
 plt.title("Naive Bayes vs Logistic Regression")
 plt.xlabel("Part of training set")
 plt.ylabel("Loss")
