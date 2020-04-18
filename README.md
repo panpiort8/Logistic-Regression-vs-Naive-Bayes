@@ -20,9 +20,10 @@ on this dataset to classify breast cancer as benign or malignant.
 
 ## Results
 
-Quadratic loss of both classifiers on test samples averaged from 1000 trainings. 
+Uncertainty and error rate of both classifiers on test samples averaged from 1000 trainings. 
 
-![](graphs/bayes_vs_regression.png)
+![](graphs/uncertainty.png)
+![](graphs/error_rate.png)
 
 
 ## Conclusions

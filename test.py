@@ -5,23 +5,27 @@ from naive_bayes import NaiveBayes
 from logistic_regression import LogisticRegression
 
 
-def load_data(path, scaling=False):
+def load_data(path, scaling=False, bias=False):
     data_pos, data_neg = [], []
     Xs = []
     ys = []
     with open(path, 'r') as file:
         for line in file:
             line = line.split()
-            Xs.append( np.array([float(x) for x in line[:-1]]))
+            Xs.append(np.array([float(x) for x in line[:-1]]))
             ys.append(int(line[-1]) // 4)
     Xs = np.array(Xs)
     if scaling:
         Xs = preprocessing.scale(Xs)
     for x, y in zip(Xs, ys):
         if y == 1:
-            data_pos.append((x, y))
+            data = data_pos
         else:
-            data_neg.append((x, y))
+            data = data_neg
+        if bias:
+            data.append((np.concatenate(([1], x)), y))
+        else:
+            data.append((x, y))
     return data_pos, data_neg
 
 
@@ -46,10 +50,14 @@ def accuracy(model, data):
     return ok / len(data)
 
 
-def loss(model, data):
+def error_rate(model, data):
+    return 1-accuracy(model, data)
+
+
+def uncertainty(model, data):
     loss = 0
     for x, y in data:
-        loss += (1 - model.prob_y_under_x(x, y)) ** 2
+        loss += 1 - model.prob_y_under_x(x, y)
     return loss / len(data)
 
 
@@ -79,15 +87,15 @@ partial_triggers = [0.01, 0.02, 0.03, 0.125, 0.625, 1]
 rounds = 1000
 
 data_pos, data_neg = load_data("rp.data")
-bayes_history = test(NaiveBayes, partial_triggers, data_pos, data_neg, rounds, loss)
-data_pos, data_neg = load_data("rp.data", scaling=True)
-logistic_history = test(LogisticRegression, partial_triggers, data_pos, data_neg, rounds, loss, alpha=0.1, beta=0.0005)
+bayes_history = test(NaiveBayes, partial_triggers, data_pos, data_neg, rounds, uncertainty)
+data_pos, data_neg = load_data("rp.data", scaling=True, bias=True)
+logistic_history = test(LogisticRegression, partial_triggers, data_pos, data_neg, rounds, uncertainty, alpha=0.1, beta=0.0005)
 
 plt.figure()
-plt.plot(partial_triggers, logistic_history, 'ro-', label="logistic_loss")
-plt.plot(partial_triggers, bayes_history, 'bo-', label="bayes_loss")
+plt.plot(partial_triggers, logistic_history, 'ro-', label="logistic")
+plt.plot(partial_triggers, bayes_history, 'bo-', label="bayes")
 plt.title("Naive Bayes vs Logistic Regression")
 plt.xlabel("Part of training set")
-plt.ylabel("Loss")
+plt.ylabel("Uncertainty")
 plt.legend()
 plt.show()

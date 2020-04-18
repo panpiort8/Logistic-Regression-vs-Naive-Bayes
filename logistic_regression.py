@@ -3,7 +3,9 @@ import numpy as np
 
 class LogisticRegression:
     def __init__(self, k):
-        self.theta = np.random.normal(0, 1, size=(k,))
+        self.theta = np.random.normal(0, 1, size=(k+1,))
+        self.mask = np.ones((k+1,))
+        self.mask[0] = 0
 
     @staticmethod
     def sigmoid(x, theta):
@@ -17,7 +19,7 @@ class LogisticRegression:
         history = []
         for i, sample in enumerate(training_data):
             x, y = sample[0], sample[1]
-            self.theta += alpha * ((y - self.sigmoid(x, self.theta)) * x - beta * self.theta)
+            self.theta += alpha * ((y - self.sigmoid(x, self.theta)) * x - beta * self.theta * self.mask)
             if i + 1 in triggers:
                 history.append(measure(self))
         return history
